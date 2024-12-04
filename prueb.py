@@ -16,6 +16,7 @@ import leafmap
 import rasterio
 import ee
 import geemap
+import matplotlib.pyplot as plt
 
 from io import BytesIO
 from matplotlib import colors
