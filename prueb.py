@@ -60,16 +60,29 @@ if MacaoAmbiguus_CR is None or provinciasCR is None:
 # Filtro para todas las visualizaciones
 
 # Obtener las opciones de filtro
-provincias_unicas = MacaoAmbiguus_CR['Provincia'].unique().tolist()
-provincias_unicas.sort()
-opciones_provincias = ['Todas'] + provincias_unicas
+cuentas_unicas = MacaoAmbiguus_CR['Cuenta Individual'].unique().tolist()
+cuentas_unicas.sort()
+opciones_cuentas = ['Todas'] + cuentas_unicas
 
-# Filtro de selección de provincia
-provincia_seleccionada = st.sidebar.selectbox("Elige una provincia:", opciones_provincias)
+# Filtro por Cuenta Individual
+cuenta_seleccionada = st.sidebar.selectbox("Elige una Cuenta Individual:", opciones_cuentas)
 
-# Aplicar filtro a los datos
+# Aplicar filtro por Cuenta Individual
+if cuenta_seleccionada != 'Todas':
+    datos_por_cuenta = MacaoAmbiguus_CR[MacaoAmbiguus_CR['Cuenta Individual'] == cuenta_seleccionada]
+else:
+    datos_por_cuenta = MacaoAmbiguus_CR.copy()
+
+# Filtro por Provincia (basado en los datos filtrados por Cuenta Individual)
+provincias_filtradas = datos_por_cuenta['Provincia'].unique().tolist()
+provincias_filtradas.sort()
+opciones_provincias = ['Todas'] + provincias_filtradas
+
+provincia_seleccionada = st.sidebar.selectbox("Elige una Provincia:", opciones_provincias)
+
+# Aplicar filtro por Provincia
 if provincia_seleccionada != 'Todas':
-    datos_filtrados = MacaoAmbiguus_CR[MacaoAmbiguus_CR['Provincia'] == provincia_seleccionada]
+    datos_filtrados = datos_por_cuenta[datos_por_cuenta['Provincia'] == provincia_seleccionada]
     provinciasCR['Conteo'] = provinciasCR['provincia'].map(
         datos_filtrados['Provincia'].value_counts()
     ).fillna(0)
@@ -79,9 +92,9 @@ if provincia_seleccionada != 'Todas':
     centro = [provincia_geom['centroid'].iloc[0].y, provincia_geom['centroid'].iloc[0].x]
     zoom = 10  # Zoom más cercano para provincias
 else:
-    datos_filtrados = MacaoAmbiguus_CR.copy()
+    datos_filtrados = datos_por_cuenta.copy()
     provinciasCR['Conteo'] = provinciasCR['provincia'].map(
-        MacaoAmbiguus_CR['Provincia'].value_counts()
+        datos_filtrados['Provincia'].value_counts()
     ).fillna(0)
 
     # Coordenadas predeterminadas para Costa Rica
@@ -89,7 +102,7 @@ else:
     zoom = 8
 
 # Mostrar los datos filtrados en una tabla
-st.subheader('Datos Filtrados de Ara Ambiguus')
+st.subheader('Datos Filtrados')
 st.dataframe(datos_filtrados)
 
 # %% [markdown]
@@ -134,7 +147,7 @@ folium.Choropleth(
     data=provinciasCR,
     columns=['provincia', 'Conteo'],  # Usamos la columna de conteo
     key_on='feature.properties.provincia',
-    fill_color='OrRd',
+    fill_color='YlGnBu',
     fill_opacity=0.7,
     line_opacity=0.2,
     legend_name='Conteo por Provincia'
