@@ -175,6 +175,30 @@ raster_layer = folium.raster_layers.TileLayer(
 raster_layer.add_to(mapa)
 
 # %%
+# Ruta del ráster remoto
+raster_url = 'https://github.com/gf0657-programacionsig/2024-ii/raw/refs/heads/main/datos/worldclim/altitud.tif'
+
+# Crear un mapa base
+mapa = folium.Map(location=[9.8, -84], zoom_start=8, tiles=None)  # Sin mapa base inicial
+
+# Agregar capas de mapas base
+folium.TileLayer('OpenStreetMap', name='OpenStreetMap').add_to(mapa)
+folium.TileLayer('CartoDB positron', name='CartoDB Positron').add_to(mapa)
+folium.TileLayer('Stamen Terrain', name='Stamen Terrain').add_to(mapa)
+
+# Agregar capa de ráster remoto
+raster_layer = folium.raster_layers.ImageOverlay(
+    name="Altitud",
+    image=raster_url,
+    bounds=[[8, -87], [11, -82]],  # Ajusta los límites a tu área de interés
+    opacity=0.6,
+    interactive=True,
+    cross_origin=False,
+    zindex=1,
+    alt="Ráster de Altitud"
+)
+raster_layer.add_to(mapa)
+
 # Asignar valores de conteo a las provincias para el mapa
 if provinciasCR is not None:
     provinciasCR['Conteo'] = provinciasCR['provincia'].map(
@@ -182,23 +206,21 @@ if provinciasCR is not None:
     ).fillna(0)  # Rellenar con 0 si no hay datos
 
     # Crear el mapa de cloropletas
-    try:
-        m = provinciasCR.explore(
-            column='Conteo',
-            name='Cantidad de Lapas por provincia',
-            cmap='OrRd',
-            tooltip=['provincia', 'Conteo'],  # Mostrar provincia y conteo en el tooltip
-            legend=True,
-            legend_kwds={
-                'caption': "Distribución de las lapas en Provincias",
-                'orientation': "horizontal"
-            }
-        )
+    folium.Choropleth(
+        geo_data=provinciasCR,
+        name='Cantidad de Lapas por provincia',
+        data=provinciasCR,
+        columns=['provincia', 'Conteo'],
+        key_on='feature.properties.provincia',
+        fill_color='OrRd',
+        fill_opacity=0.7,
+        line_opacity=0.2,
+        legend_name='Observaciones de Ara ambiguus'
+    ).add_to(mapa)
 
-        # Mostrar el mapa interactivo
-        st.subheader('Distribución de Ara Ambiguus en Costa Rica')
-        st_folium(m, width=700, height=600)
-    except Exception as e:
-        st.error(f"Error al generar el mapa interactivo: {e}")
-else:
-    st.error("No se pudieron cargar los datos de provincias.")
+# Agregar control de capas
+folium.LayerControl(position='topright', collapsed=False).add_to(mapa)
+
+# Mostrar el mapa interactivo
+st.subheader('Distribución de Ara Ambiguus en Costa Rica')
+st_folium(mapa, width=700, height=600)
