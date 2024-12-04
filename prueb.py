@@ -35,11 +35,14 @@ lim_provincias = 'Aras/provincias.gpkg'
 # %% [markdown]
 # # Carga de datos
 
-# %%
 @st.cache_data
 def cargar_Ara_MacaoAmbiguus():
-    MacaoAmbiguus = pd.read_csv(Ara_MacaoAmbiguus)
-    return MacaoAmbiguus
+    try:
+        MacaoAmbiguus = pd.read_csv(Ara_MacaoAmbiguus, delimiter="\t")
+        return MacaoAmbiguus
+    except Exception as e:
+        st.error(f"Error al cargar el archivo CSV: {e}")
+        return None
 
 @st.cache_data
 def cargar_lim_provincias():
