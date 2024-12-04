@@ -43,11 +43,24 @@ def cargar_Ara_MacaoAmbiguus():
         
         # Eliminar espacios adicionales de los nombres de las columnas
         MacaoAmbiguus.columns = MacaoAmbiguus.columns.str.strip()
+        
+        # Filtrar solo los registros de Ara ambiguus
+        MacaoAmbiguus = MacaoAmbiguus[MacaoAmbiguus['Nombre'] == 'Ara ambiguus']
                 
         return MacaoAmbiguus
     except Exception as e:
         st.error(f"Error al cargar el archivo CSV: {e}")
         return None
+
+# Cargar los datos filtrados
+MacaoAmbiguus_CR = cargar_Ara_MacaoAmbiguus()
+
+if MacaoAmbiguus_CR is not None:
+    st.write("Datos filtrados (Ara ambiguus) cargados con éxito.")
+    st.dataframe(MacaoAmbiguus_CR.head())  # Muestra los primeros registros para verificar
+else:
+    st.error("No se pudieron cargar los datos.")
+    st.stop()
 
 # Cargar los datos
 MacaoAmbiguus_CR = cargar_Ara_MacaoAmbiguus()
