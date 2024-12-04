@@ -116,13 +116,13 @@ MacaoAmbiguus_merged = MacaoAmbiguus_gdf.merge(
 
 
 # Filtración de las columnas relevantes del conjunto de los datos 
-    columnas_bf = [
-    'provincia',
-    'geometry',
-    'Nombre'
-]
-MacaoAmbiguus_merged= MacaoAmbiguus_merged[columnas_bf]
-MacaoAmbiguus_merged = MacaoAmbiguus_merged.rename(columns={'Nombre': 'Especie'})
+ #   columnas_bf = [
+  #  'provincia',
+   # 'geometry',
+    #'Nombre'
+#]
+#MacaoAmbiguus_merged= MacaoAmbiguus_merged[columnas_bf]
+#MacaoAmbiguus_merged = MacaoAmbiguus_merged.rename(columns={'Nombre': 'Especie'})
 
 # %%
 # ----- Sección interactiva -----
