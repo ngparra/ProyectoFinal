@@ -169,6 +169,9 @@ folium.Choropleth(
     geo_data=provinciasCR,
     name='Conteo de Ara ambiguus',
     data=provinciasCR,
+    fill_color='OrRd',
+    fill_opacity=0.7,
+    line_opacity=0.2,
     columns=['provincia', 'Conteo'],
     legend_name='Observaciones de Ara ambiguus'
 ).add_to(mapa)
