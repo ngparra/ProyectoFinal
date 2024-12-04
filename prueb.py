@@ -43,10 +43,7 @@ def cargar_Ara_MacaoAmbiguus():
         
         # Eliminar espacios adicionales de los nombres de las columnas
         MacaoAmbiguus.columns = MacaoAmbiguus.columns.str.strip()
-        
-        # Verificar los nombres actualizados (puedes usar st.write en lugar de print)
-        st.write("Nombres de columnas después de la limpieza:", MacaoAmbiguus.columns.tolist())
-        
+                
         return MacaoAmbiguus
     except Exception as e:
         st.error(f"Error al cargar el archivo CSV: {e}")
