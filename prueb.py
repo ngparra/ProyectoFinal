@@ -154,31 +154,34 @@ else:
     st.warning("La columna 'month' no está presente en los datos filtrados.")
 
 # %% [markdown]
-# Mapa interactivo con capas de mapas base
-
 # Crear un mapa base
 mapa = folium.Map(location=[9.8, -84], zoom_start=8, tiles=None)  # Sin mapa base inicial
 
 # Agregar capas de mapas base
-TileLayer('OpenStreetMap', name='OpenStreetMap').add_to(mapa)
-TileLayer('CartoDB positron', name='CartoDB Positron').add_to(mapa)
-TileLayer('Stamen Terrain', name='Stamen Terrain').add_to(mapa)
+folium.TileLayer('OpenStreetMap', name='OpenStreetMap').add_to(mapa)
+folium.TileLayer('CartoDB positron', name='CartoDB Positron').add_to(mapa)
+folium.TileLayer('Stamen Terrain', name='Stamen Terrain').add_to(mapa)
 
-# Agregar capa de datos (cloropletas)
-folium.Choropleth(
-    geo_data=provinciasCR,
-    name='Conteo de Ara ambiguus',
-    data=provinciasCR,
-    fill_color='OrRd',
-    fill_opacity=0.7,
-    line_opacity=0.2,
-    columns=['provincia', 'Conteo'],
-    legend_name='Observaciones de Ara ambiguus'
-).add_to(mapa)
+# Verificar que la columna 'Conteo' y el campo 'provincia' existen
+if 'Conteo' in provinciasCR.columns and 'provincia' in provinciasCR.columns:
+    # Agregar capa de datos (cloropletas)
+    folium.Choropleth(
+        geo_data=provinciasCR,
+        name='Conteo de Ara ambiguus',
+        data=provinciasCR,
+        columns=['provincia', 'Conteo'],  # Campos para unir datos
+        key_on='feature.properties.provincia',  # Campo del GeoJSON
+        fill_color='OrRd',
+        fill_opacity=0.7,
+        line_opacity=0.2,
+        legend_name='Observaciones de Ara ambiguus'
+    ).add_to(mapa)
 
-# Agregar control de capas
-folium.LayerControl().add_to(mapa)
+    # Agregar control de capas
+    folium.LayerControl().add_to(mapa)
 
-# Mostrar mapa
-st.subheader('Mapa interactivo con opciones de mapas base')
-st_folium(mapa, width=700, height=600)
+    # Mostrar mapa
+    st.subheader('Mapa interactivo con opciones de mapas base')
+    st_folium(mapa, width=700, height=600)
+else:
+    st.error("La columna 'Conteo' o 'provincia' no está disponible en los datos.")
