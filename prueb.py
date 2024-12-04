@@ -39,7 +39,7 @@ lim_provincias = 'Aras/provincias.gpkg'
 def cargar_Ara_MacaoAmbiguus():
     try:
         # Cargar el archivo CSV con tabulaciones como delimitador
-        MacaoAmbiguus = pd.read_csv(Macao_Ambiguus, delimiter="\t")
+        MacaoAmbiguus = pd.read_csv(Ara_MacaoAmbiguus, delimiter="\t")
         
         # Eliminar espacios adicionales de los nombres de las columnas
         MacaoAmbiguus.columns = MacaoAmbiguus.columns.str.strip()
