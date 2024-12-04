@@ -33,10 +33,6 @@ Ara_MacaoAmbiguus = 'Aras/Macao_Ambiguus.csv'
 lim_provincias = 'Aras/provincias.gpkg'
 
 # %% [markdown]
-# %%
-st.title('Ara Macao y Ara Ambiguus: Costa Rica')
-st.subheader('Geog. Santiago Brenes Salas (B81292)')
-
 # # Carga de datos
 
 @st.cache_data
@@ -61,7 +57,6 @@ MacaoAmbiguus_CR = cargar_Ara_MacaoAmbiguus()
 
 if MacaoAmbiguus_CR is not None:
     st.write("Datos filtrados (Ara ambiguus) cargados con éxito.")
-    st.write("Columnas disponibles en los datos:", MacaoAmbiguus_CR.columns.tolist())
     st.dataframe(MacaoAmbiguus_CR.head())  # Muestra los primeros registros para verificar
 else:
     st.error("No se pudieron cargar los datos.")
@@ -80,11 +75,10 @@ def cargar_lim_provincias():
         return None
 
 # %%
-# Datos de Ara Macao y Ara Ambiguus
-carga_MacaoAmbiguus = st.text('Datos de Ara Macao y Ara Ambiguus')
-MacaoAmbiguus_CR = cargar_Ara_MacaoAmbiguus()
-carga_MacaoAmbiguus.text('Los datos de Ara Macao y Ara Ambiguus han sido cargados.')
+st.title('Ara Macao y Ara Ambiguus: Costa Rica')
+st.subheader('Geog. Santiago Brenes Salas (B81292)')
 
+# %%
 # Cargar datos geoespaciales de las provincias
 carga_provinciasCR = st.text('Cargando datos de los límites de las provincias...')
 provinciasCR = cargar_lim_provincias()
@@ -117,40 +111,33 @@ provincia_seleccionada = st.sidebar.selectbox(
 # Filtrar datos para no tener nulos
 if provincia_seleccionada != 'Todas':
     MacaoAmbiguus_filtrados = MacaoAmbiguus_CR[MacaoAmbiguus_CR['Provincia'] == provincia_seleccionada]
-    if 'cod_provin' in MacaoAmbiguus_filtrados.columns:
-        Ara_seleccion = MacaoAmbiguus_filtrados['cod_provin'].iloc[0]
-    else:
-        st.warning("La columna 'cod_provin' no existe en los datos filtrados.")
-        Ara_seleccion = None
 else:
     MacaoAmbiguus_filtrados = MacaoAmbiguus_CR.copy()
-    Ara_seleccion = None
 
 # %%
-# Unión de los datos de Ara Macao y Ara Ambiguus con las provincias
-try:
-    MacaoAmbiguus_gdf = provinciasCR.copy()
-    MacaoAmbiguus_merged = MacaoAmbiguus_gdf.merge(
-        MacaoAmbiguus_filtrados, 
-        how='inner', 
-        left_on='provincia', 
-        right_on='Provincia'
+# Crear el gráfico de frecuencia mensual
+if 'month' in MacaoAmbiguus_filtrados.columns:
+    MacaoAmbiguus_filtrados['Mes'] = MacaoAmbiguus_filtrados['month'].replace({
+        1: 'Enero', 2: 'Febrero', 3: 'Marzo', 4: 'Abril',
+        5: 'Mayo', 6: 'Junio', 7: 'Julio', 8: 'Agosto',
+        9: 'Septiembre', 10: 'Octubre', 11: 'Noviembre', 12: 'Diciembre'
+    })
+
+    fig = px.histogram(
+        MacaoAmbiguus_filtrados,
+        x='Mes',
+        color='Nombre',
+        title='Frecuencia de observaciones registradas de Ara ambiguus por mes',
+        labels={'Mes': 'Mes', 'Cantidad de observaciones': 'Cantidad de observaciones'},
+        color_discrete_map={'Ara ambiguus': '#38A800'}
     )
-
-    # Filtración de las columnas relevantes del conjunto de datos
-    columnas_bf = ['provincia', 'geometry', 'Nombre']
-    MacaoAmbiguus_merged = MacaoAmbiguus_merged[columnas_bf]
-    MacaoAmbiguus_merged = MacaoAmbiguus_merged.rename(columns={'Nombre': 'Especie'})
-
-    # Convertir la columna 'geometry' a texto (WKT) para compatibilidad con Streamlit
-    if 'geometry' in MacaoAmbiguus_merged.columns:
-        MacaoAmbiguus_merged['geometry'] = MacaoAmbiguus_merged['geometry'].apply(lambda geom: geom.wkt if geom else None)
-
-    # Mostrar la tabla sin la columna 'geometry'
-    st.subheader('Datos seleccionables por provincia para Ara Macao y Ara Ambiguus')
-    st.dataframe(MacaoAmbiguus_merged.drop(columns=['geometry']), hide_index=True)
-except Exception as e:
-    st.error(f"Error al procesar los datos para la visualización: {e}")
+    fig.update_xaxes(categoryorder='array', categoryarray=[
+        'Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio',
+        'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'
+    ])
+    st.plotly_chart(fig)
+else:
+    st.warning("La columna 'month' no está presente en los datos filtrados.")
 
 # %%
 # Crear el mapa interactivo con las áreas de conservación
@@ -168,7 +155,8 @@ try:
     )
 
     # Mostrar el mapa interactivo
-    st.subheader('Distribución de Ara Macao y Ara Ambiguus en Costa Rica')
+    st.subheader('Distribución de Ara Ambiguus en Costa Rica')
     st_folium(m, width=700, height=600)
 except Exception as e:
     st.error(f"Error al generar el mapa interactivo: {e}")
+
