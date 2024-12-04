@@ -13,4 +13,4 @@ rasterio
 earthengine-api
 geemap
 matplotlib
-
+streamlit-folium
