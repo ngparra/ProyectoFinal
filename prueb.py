@@ -101,13 +101,40 @@ st.subheader('Totales por provincia (Ara ambiguus)')
 st.dataframe(agrupado_MacaoAmbiguus_CR)
 
 # %% [markdown]
+# ## Seleccionador por Provincia
+
+# Generar la lista de provincias y agregar "Todas"
+MacAmb_prov = agrupado_MacaoAmbiguus_CR['Provincia'].tolist()
+MacAmb_prov.sort()
+opciones_provincias = ['Todas'] + MacAmb_prov
+
+provincia_seleccionada = st.sidebar.selectbox(
+    'Selecciona una provincia:',
+    opciones_provincias
+)
+
+# Filtrar los datos según la selección
+if provincia_seleccionada != 'Todas':
+    datos_filtrados = MacaoAmbiguus_CR[MacaoAmbiguus_CR['Provincia'] == provincia_seleccionada]
+    datos_filtrados_agrupados = agrupado_MacaoAmbiguus_CR[
+        agrupado_MacaoAmbiguus_CR['Provincia'] == provincia_seleccionada
+    ]
+else:
+    datos_filtrados = MacaoAmbiguus_CR.copy()
+    datos_filtrados_agrupados = agrupado_MacaoAmbiguus_CR.copy()
+
+# Mostrar los datos filtrados
+st.subheader(f'Datos filtrados para: {provincia_seleccionada}')
+st.dataframe(datos_filtrados)
+
+# %% [markdown]
 # ## Gráfico de Totales por Provincia
 
 fig_totales = px.bar(
-    agrupado_MacaoAmbiguus_CR,
+    datos_filtrados_agrupados,
     x='Provincia',
     y='Total Cuenta Individual',
-    title='Totales de Ara ambiguus por provincia',
+    title=f'Totales de Ara ambiguus para {provincia_seleccionada}',
     labels={'Provincia': 'Provincia', 'Total Cuenta Individual': 'Total Cuenta Individual'},
     color='Provincia'
 )
@@ -117,10 +144,9 @@ st.plotly_chart(fig_totales)
 # ## Mapa de Totales por Provincia
 
 if provinciasCR is not None:
-    # Asignar totales por provincia al GeoDataFrame
     provinciasCR['Total Cuenta Individual'] = provinciasCR['provincia'].map(
-        agrupado_MacaoAmbiguus_CR.set_index('Provincia')['Total Cuenta Individual']
-    ).fillna(0)  # Rellenar con 0 si no hay datos
+        datos_filtrados_agrupados.set_index('Provincia')['Total Cuenta Individual']
+    ).fillna(0)
 
     try:
         # Crear el mapa cloroplético
@@ -131,16 +157,13 @@ if provinciasCR is not None:
             tooltip=['provincia', 'Total Cuenta Individual'],
             legend=True,
             legend_kwds={
-                'caption': "Totales de Ara ambiguus por provincia",
+                'caption': f"Totales de Ara ambiguus para {provincia_seleccionada}",
                 'orientation': "horizontal"
             }
         )
-
-        # Mostrar el mapa interactivo
-        st.subheader('Totales de Ara ambiguus en Costa Rica')
+        st.subheader(f'Totales de Ara ambiguus en {provincia_seleccionada if provincia_seleccionada != "Todas" else "Costa Rica"}')
         st_folium(m_totales, width=700, height=600)
     except Exception as e:
         st.error(f"Error al generar el mapa interactivo: {e}")
 else:
     st.error("No se pudieron cargar los datos de provincias.")
-
