@@ -57,21 +57,33 @@ if MacaoAmbiguus_CR is None or provinciasCR is None:
     st.stop()
 
 # %% [markdown]
-# Filtro para todas las visualizaciones
+# Filtros para las visualizaciones
 
-# Obtener las opciones de filtro
-cuentas_unicas = MacaoAmbiguus_CR['Cuenta Individual'].unique().tolist()
+# Filtro por Especie
+especies_unicas = MacaoAmbiguus_CR['Nombre'].unique().tolist()
+especies_unicas.sort()
+opciones_especies = ['Todas'] + especies_unicas
+
+especie_seleccionada = st.sidebar.selectbox("Elige una especie:", opciones_especies)
+
+# Aplicar filtro por especie
+if especie_seleccionada != 'Todas':
+    datos_por_especie = MacaoAmbiguus_CR[MacaoAmbiguus_CR['Nombre'] == especie_seleccionada]
+else:
+    datos_por_especie = MacaoAmbiguus_CR.copy()
+
+# Filtro por Cuenta Individual
+cuentas_unicas = datos_por_especie['Cuenta Individual'].unique().tolist()
 cuentas_unicas.sort()
 opciones_cuentas = ['Todas'] + cuentas_unicas
 
-# Filtro por Cuenta Individual
 cuenta_seleccionada = st.sidebar.selectbox("Elige una Cuenta Individual:", opciones_cuentas)
 
 # Aplicar filtro por Cuenta Individual
 if cuenta_seleccionada != 'Todas':
-    datos_por_cuenta = MacaoAmbiguus_CR[MacaoAmbiguus_CR['Cuenta Individual'] == cuenta_seleccionada]
+    datos_por_cuenta = datos_por_especie[datos_por_especie['Cuenta Individual'] == cuenta_seleccionada]
 else:
-    datos_por_cuenta = MacaoAmbiguus_CR.copy()
+    datos_por_cuenta = datos_por_especie.copy()
 
 # Filtro por Provincia (basado en los datos filtrados por Cuenta Individual)
 provincias_filtradas = datos_por_cuenta['Provincia'].unique().tolist()
@@ -143,7 +155,7 @@ folium.TileLayer('Stamen Terrain', name='Stamen Terrain').add_to(mapa)
 # Agregar capa de cloropletas basada en la columna 'Conteo'
 folium.Choropleth(
     geo_data=provinciasCR,
-    name='Conteo de Ara ambiguus por provincia',
+    name='Conteo de observaciones por provincia',
     data=provinciasCR,
     columns=['provincia', 'Conteo'],  # Usamos la columna de conteo
     key_on='feature.properties.provincia',
@@ -165,5 +177,8 @@ for _, row in provinciasCR.iterrows():
 folium.LayerControl(collapsed=False).add_to(mapa)
 
 # Mostrar el mapa interactivo
+st.subheader('Mapa Interactivo')
+st_folium(mapa, width=700, height=600)
+
 st.subheader('Mapa Interactivo')
 st_folium(mapa, width=700, height=600)
