@@ -74,7 +74,7 @@ MacaoAmbiguus_CR = cargar_Ara_MacaoAmbiguus()
     #st.stop()
 
 # Cargar datos geoespaciales de las provincias
-carga_provinciasCR = st.text('Cargando datos de los límites de las provincias...')
+#carga_provinciasCR = st.text('Cargando datos de los límites de las provincias...')
 provinciasCR = cargar_lim_provincias()
 #carga_provinciasCR.text('Los límites de las provincias han sido cargados.')
 
@@ -97,8 +97,8 @@ def agrupar_por_provincia(MacaoAmbiguus_CR):
 agrupado_MacaoAmbiguus_CR = agrupar_por_provincia(MacaoAmbiguus_CR)
 
 # Mostrar los totales por provincia
-st.subheader('Totales por provincia (Ara ambiguus)')
-st.dataframe(agrupado_MacaoAmbiguus_CR)
+#st.subheader('Totales por provincia (Ara ambiguus)')
+#st.dataframe(agrupado_MacaoAmbiguus_CR)
 
 # %% [markdown]
 # ## Seleccionador por Provincia
