@@ -38,6 +38,7 @@ st.title('Ara Macao y Ara Ambiguus: Costa Rica')
 st.subheader('Geog. Santiago Brenes Salas (B81292)')
 
 # # Carga de datos
+# Función para cargar y corregir los datos del CSV
 @st.cache_data
 def cargar_Ara_MacaoAmbiguus():
     try:
@@ -46,6 +47,13 @@ def cargar_Ara_MacaoAmbiguus():
         
         # Eliminar espacios adicionales de los nombres de las columnas
         MacaoAmbiguus.columns = MacaoAmbiguus.columns.str.strip()
+        
+        # Reemplazar "Limon" por "Limón" y "San Jose" por "San José" en la columna correspondiente
+        if 'Provincia' in MacaoAmbiguus.columns:
+            MacaoAmbiguus['Provincia'] = MacaoAmbiguus['Provincia'].replace({
+                "Limon": "Limón",
+                "San Jose": "San José"
+            })
         
         # Filtrar solo los registros de Ara ambiguus
         MacaoAmbiguus = MacaoAmbiguus[MacaoAmbiguus['Nombre'] == 'Ara ambiguus']
