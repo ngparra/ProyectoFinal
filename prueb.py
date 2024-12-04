@@ -24,6 +24,7 @@ from matplotlib.colors import LinearSegmentedColormap
 from folium.raster_layers import ImageOverlay
 from streamlit_folium import folium_static, st_folium
 from branca.colormap import LinearColormap, linear
+from folium import TileLayer
 
 # %%
 # CSV Ara Macao y Ara Ambiguus
