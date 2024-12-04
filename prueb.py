@@ -124,9 +124,13 @@ columnas_bf = [
 MacaoAmbiguus_merged = MacaoAmbiguus_merged[columnas_bf]
 MacaoAmbiguus_merged = MacaoAmbiguus_merged.rename(columns={'Nombre': 'Especie'})
 
-# Mostrar la tabla
+# Convertir la columna 'geometry' a texto (WKT) para compatibilidad con Streamlit
+if 'geometry' in MacaoAmbiguus_merged.columns:
+    MacaoAmbiguus_merged['geometry'] = MacaoAmbiguus_merged['geometry'].apply(lambda geom: geom.wkt if geom else None)
+
+# Mostrar la tabla sin la columna 'geometry'
 st.subheader('Datos seleccionables por provincia para Ara Macao y Ara Ambiguus')
-st.dataframe(MacaoAmbiguus_merged, hide_index=True)
+st.dataframe(MacaoAmbiguus_merged.drop(columns=['geometry']), hide_index=True)
 
 # %% [markdown]
 # # Frecuencia de observaciones registradas de Ara Macao y Ara Ambiguus por mes
@@ -181,7 +185,7 @@ m = provinciasCR.explore(
     column='Conteo',
     name='Cantidad de Lapas por provincia',
     cmap='OrRd',
-    tooltip=['provincia', 'geometry'],
+    tooltip=['provincia'],
     legend=True,
     legend_kwds={
         'caption': "Distribución de los lapas en Provincias",
