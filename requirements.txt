@@ -2,7 +2,6 @@ streamlit
 pandas
 plotly.express
 geopandas
-matplotlib.pyplot
 mapclassify
 numpy 
 folium
@@ -12,4 +11,4 @@ leafmap
 rasterio
 ee
 geemap
-matplotlib.pyplot
+matplotlib
