@@ -25,8 +25,6 @@ from folium.raster_layers import ImageOverlay
 from streamlit_folium import folium_static, st_folium
 from branca.colormap import LinearColormap, linear
 
-
-
 # %%
 # CSV Ara Macao y Ara Ambiguus
 Ara_MacaoAmbiguus = 'Aras/Macao_Ambiguus.csv' 
@@ -35,84 +33,11 @@ Ara_MacaoAmbiguus = 'Aras/Macao_Ambiguus.csv'
 lim_provincias = 'Aras/provincias.gpkg'
 
 # %% [markdown]
-# # Carga de datos
-
 # %%
 st.title('Ara Macao y Ara Ambiguus: Costa Rica')
 st.subheader('Geog. Santiago Brenes Salas (B81292)')
 
-@st.cache_data
-def cargar_Ara_MacaoAmbiguus():
-    try:
-        # Cargar el archivo CSV con tabulaciones como delimitador
-        MacaoAmbiguus = pd.read_csv(Ara_MacaoAmbiguus, delimiter="\t")
-        
-        # Eliminar espacios adicionales de los nombres de las columnas
-        MacaoAmbiguus.columns = MacaoAmbiguus.columns.str.strip()
-        
-        # Filtrar solo los registros de Ara ambiguus
-        MacaoAmbiguus = MacaoAmbiguus[MacaoAmbiguus['Nombre'] == 'Ara ambiguus']
-                
-        return MacaoAmbiguus
-    except Exception as e:
-        st.error(f"Error al cargar el archivo CSV: {e}")
-        return None
-
-# Cargar los datos filtrados
-MacaoAmbiguus_CR = cargar_Ara_MacaoAmbiguus()
-
-if MacaoAmbiguus_CR is not None:
-    st.write("Datos filtrados (Ara ambiguus) cargados con éxito.")
-    st.dataframe(MacaoAmbiguus_CR.head())  # Muestra los primeros registros para verificar
-else:
-    st.error("No se pudieron cargar los datos.")
-    st.stop()
-
-@st.cache_data
-def cargar_lim_provincias():
-    try:
-        provincias = gpd.read_file(lim_provincias)
-        # Verificar y configurar CRS # %% [markdown]
-# # Ara Macao y Ara Ambiguus: Costa Rica
-
-# %%
-import streamlit as st
-import pandas as pd
-import plotly.express as px
-import geopandas as gpd
-import matplotlib.pyplot as plt
-import mapclassify
-import numpy as np
-import folium
-import branca
-import plotly.graph_objects as go
-import leafmap
-import rasterio
-import ee
-import geemap
-import matplotlib.pyplot as plt
-
-from io import BytesIO
-from matplotlib import colors
-from matplotlib.colors import LinearSegmentedColormap
-from folium.raster_layers import ImageOverlay
-from streamlit_folium import folium_static, st_folium
-from branca.colormap import LinearColormap, linear
-
-# %%
-st.title('Ara Macao y Ara Ambiguus: Costa Rica')
-st.subheader('Geog. Santiago Brenes Salas (B81292)')
-
-# %%
-# CSV Ara Macao y Ara Ambiguus
-Ara_MacaoAmbiguus = 'Aras/Macao_Ambiguus.csv' 
-
-# Provincias
-lim_provincias = 'Aras/provincias.gpkg'
-
-# %% [markdown]
 # # Carga de datos
-
 @st.cache_data
 def cargar_Ara_MacaoAmbiguus():
     try:
