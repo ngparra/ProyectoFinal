@@ -16,7 +16,7 @@ lim_provincias = 'Aras/provincias.gpkg'  # Archivo de límites provinciales
 
 # %% [markdown]
 st.title('Ara Macao y Ara Ambiguus: Costa Rica')
-st.subheader('Geog. Santiago Brenes Salas (B81292)')
+st.subheader('Geog. D. Santiago Brenes Salas (B81292)')
 
 # %% [markdown]
 # ## Función para cargar y procesar datos
@@ -66,23 +66,23 @@ def cargar_lim_provincias():
 # Cargar datos de Ara ambiguus
 MacaoAmbiguus_CR = cargar_Ara_MacaoAmbiguus()
 
-if MacaoAmbiguus_CR is not None:
-    st.write("Datos filtrados (Ara ambiguus) cargados con éxito.")
-    st.dataframe(MacaoAmbiguus_CR.head())  # Mostrar primeras filas
-else:
-    st.error("No se pudieron cargar los datos.")
-    st.stop()
+#if MacaoAmbiguus_CR is not None:
+    #st.write("Datos filtrados (Ara ambiguus) cargados con éxito.")
+    #st.dataframe(MacaoAmbiguus_CR.head())  # Mostrar primeras filas
+#else:
+    #st.error("No se pudieron cargar los datos.")
+    #st.stop()
 
 # Cargar datos geoespaciales de las provincias
 carga_provinciasCR = st.text('Cargando datos de los límites de las provincias...')
 provinciasCR = cargar_lim_provincias()
-carga_provinciasCR.text('Los límites de las provincias han sido cargados.')
+#carga_provinciasCR.text('Los límites de las provincias han sido cargados.')
 
-if provinciasCR is not None:
-    st.write("Columnas disponibles en provinciasCR:", provinciasCR.columns.tolist())
-else:
-    st.error("No se pudieron cargar las provincias.")
-    st.stop()
+#if provinciasCR is not None:
+    #st.write("Columnas disponibles en provinciasCR:", provinciasCR.columns.tolist())
+#else:
+    #st.error("No se pudieron cargar las provincias.")
+    #st.stop()
 
 # %% [markdown]
 # ## Agrupamiento por provincia
