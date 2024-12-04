@@ -4,141 +4,172 @@
 # %%
 import streamlit as st
 import pandas as pd
-import geopandas as gpd
-import folium
-from streamlit_folium import st_folium
 import plotly.express as px
+import geopandas as gpd
+import matplotlib.pyplot as plt
+import mapclassify
+import numpy as np
+import folium
+import branca
+import plotly.graph_objects as go
+import leafmap
+import rasterio
+import ee
+import geemap
+import matplotlib.pyplot as plt
 
-# Configuración inicial y carga de datos
+from io import BytesIO
+from matplotlib import colors
+from matplotlib.colors import LinearSegmentedColormap
+from folium.raster_layers import ImageOverlay
+from streamlit_folium import folium_static, st_folium
+from branca.colormap import LinearColormap, linear
 
+# %%
 # CSV Ara Macao y Ara Ambiguus
-Ara_MacaoAmbiguus = 'Aras/Macao_Ambiguus.csv'
+Ara_MacaoAmbiguus = 'Aras/Macao_Ambiguus.csv' 
 
 # Provincias
 lim_provincias = 'Aras/provincias.gpkg'
 
+# %% [markdown]
+# %%
 st.title('Ara Macao y Ara Ambiguus: Costa Rica')
 st.subheader('Geog. Santiago Brenes Salas (B81292)')
 
-# Función para cargar y corregir los datos del CSV
+# # Carga de datos
 @st.cache_data
 def cargar_Ara_MacaoAmbiguus():
     try:
+        # Cargar el archivo CSV con tabulaciones como delimitador
         MacaoAmbiguus = pd.read_csv(Ara_MacaoAmbiguus, delimiter="\t")
+        
+        # Eliminar espacios adicionales de los nombres de las columnas
         MacaoAmbiguus.columns = MacaoAmbiguus.columns.str.strip()
-        MacaoAmbiguus['Provincia'] = MacaoAmbiguus['Provincia'].replace({
-            "Limon": "Limón",
-            "San Jose": "San José"
-        })
+        
+        # Filtrar solo los registros de Ara ambiguus
+        MacaoAmbiguus = MacaoAmbiguus[MacaoAmbiguus['Nombre'] == 'Ara ambiguus']
+                
         return MacaoAmbiguus
     except Exception as e:
         st.error(f"Error al cargar el archivo CSV: {e}")
         return None
 
+# Cargar los datos filtrados
+MacaoAmbiguus_CR = cargar_Ara_MacaoAmbiguus()
+
+if MacaoAmbiguus_CR is not None:
+    st.write("Datos filtrados (Ara ambiguus) cargados con éxito.")
+    st.dataframe(MacaoAmbiguus_CR.head())  # Muestra los primeros registros para verificar
+else:
+    st.error("No se pudieron cargar los datos.")
+    st.stop()
+
 @st.cache_data
 def cargar_lim_provincias():
     try:
         provincias = gpd.read_file(lim_provincias)
+        # Verificar y configurar CRS si es necesario
         if provincias.crs is None:
             provincias.set_crs("EPSG:4326", inplace=True)
-        # Agregar columna con centroides para el zoom dinámico
-        provincias['centroid'] = provincias.geometry.centroid
         return provincias
     except Exception as e:
         st.error(f"Error al cargar los datos geoespaciales: {e}")
         return None
 
-# Carga de datos
-MacaoAmbiguus_CR = cargar_Ara_MacaoAmbiguus()
-provinciasCR = cargar_lim_provincias()
 
-if MacaoAmbiguus_CR is None or provinciasCR is None:
+# %%
+# Cargar datos geoespaciales de las provincias
+carga_provinciasCR = st.text('Cargando datos de los límites de las provincias...')
+provinciasCR = cargar_lim_provincias()
+carga_provinciasCR.text('Los límites de las provincias han sido cargados.')
+
+# Verificar columnas en provinciasCR
+if provinciasCR is not None:
+    st.write("Columnas disponibles en provinciasCR:", provinciasCR.columns.tolist())
+
+    # Crear la columna 'Conteo' si no existe
+    if 'Conteo' not in provinciasCR.columns:
+        provinciasCR['Conteo'] = 0  # Valor por defecto
+else:
+    st.error("No se pudieron cargar las provincias.")
     st.stop()
 
-# Agrupación de datos por Provincia y Cuenta Individual
-datos_agrupados = MacaoAmbiguus_CR.groupby(['Provincia', 'Cuenta Individual']).size().reset_index(name='Conteo')
+# %%
+MacAmb_prov = MacaoAmbiguus_CR['Provincia'].unique().tolist()
+MacAmb_prov.sort()
 
-# Filtro por Provincia
-provincias_filtradas = datos_agrupados['Provincia'].unique().tolist()
-provincias_filtradas.sort()
-opciones_provincias = ['Todas'] + provincias_filtradas
+# "Todas" al inicio de la lista
+opciones_provincias = ['Todas'] + MacAmb_prov
 
-provincia_seleccionada = st.sidebar.selectbox("Elige una Provincia:", opciones_provincias)
-
-# Aplicar filtro por Provincia
-if provincia_seleccionada != 'Todas':
-    datos_filtrados = datos_agrupados[datos_agrupados['Provincia'] == provincia_seleccionada]
-    provinciasCR['Conteo'] = provinciasCR['provincia'].map(
-        datos_filtrados.groupby('Provincia')['Conteo'].sum()
-    ).fillna(0)
-
-    # Obtener coordenadas para centrar el mapa en la provincia seleccionada
-    provincia_geom = provinciasCR[provinciasCR['provincia'] == provincia_seleccionada]
-    centro = [provincia_geom['centroid'].iloc[0].y, provincia_geom['centroid'].iloc[0].x]
-    zoom = 10  # Zoom más cercano para provincias
-else:
-    datos_filtrados = datos_agrupados.copy()
-    provinciasCR['Conteo'] = provinciasCR['provincia'].map(
-        datos_filtrados.groupby('Provincia')['Conteo'].sum()
-    ).fillna(0)
-
-    # Coordenadas predeterminadas para Costa Rica
-    centro = [9.8, -84]
-    zoom = 8
-
-# Mostrar los datos filtrados en una tabla
-st.subheader('Datos Filtrados')
-st.dataframe(datos_filtrados)
-
-# Gráfico de cuentas individuales por provincia
-fig = px.bar(
-    datos_filtrados,
-    x='Cuenta Individual',
-    y='Conteo',
-    color='Provincia',
-    title=f'Cantidad de observaciones por Cuenta Individual en {"todas las provincias" if provincia_seleccionada == "Todas" else provincia_seleccionada}',
-    labels={'Cuenta Individual': 'Cuenta Individual', 'Conteo': 'Cantidad de observaciones'},
+# Selección de provincia para filtrar solo la tabla
+st.sidebar.title('Filtros')
+provincia_seleccionada = st.sidebar.selectbox(
+    'Elige una provincia para ver los datos en la tabla:',
+    opciones_provincias
 )
-st.plotly_chart(fig)
 
-# Mapa interactivo
+# Filtrar datos para la tabla según la selección
+if provincia_seleccionada != 'Todas':
+    MacaoAmbiguus_filtrados = MacaoAmbiguus_CR[MacaoAmbiguus_CR['Provincia'] == provincia_seleccionada]
+else:
+    MacaoAmbiguus_filtrados = MacaoAmbiguus_CR.copy()
 
-# Crear un mapa base con ubicación y zoom dinámico
-mapa = folium.Map(location=centro, zoom_start=zoom, tiles=None)  # Vista inicial
+# Mostrar la tabla filtrada
+st.subheader('Datos filtrados de Ara ambiguus')
+st.dataframe(MacaoAmbiguus_filtrados)
 
-# Agregar capas de mapas base
-folium.TileLayer('OpenStreetMap', name='OpenStreetMap').add_to(mapa)
-folium.TileLayer('CartoDB positron', name='CartoDB Positron').add_to(mapa)
-folium.TileLayer('Stamen Terrain', name='Stamen Terrain').add_to(mapa)
+# %%
+# Crear el gráfico de frecuencia mensual
+if 'month' in MacaoAmbiguus_filtrados.columns:
+    MacaoAmbiguus_filtrados['Mes'] = MacaoAmbiguus_filtrados['month'].replace({
+        1: 'Enero', 2: 'Febrero', 3: 'Marzo', 4: 'Abril',
+        5: 'Mayo', 6: 'Junio', 7: 'Julio', 8: 'Agosto',
+        9: 'Septiembre', 10: 'Octubre', 11: 'Noviembre', 12: 'Diciembre'
+    })
 
-# Agregar capa de cloropletas basada en la columna 'Conteo'
-folium.Choropleth(
-    geo_data=provinciasCR,
-    name='Conteo de observaciones por provincia',
-    data=provinciasCR,
-    columns=['provincia', 'Conteo'],  # Usamos la columna de conteo
-    key_on='feature.properties.provincia',
-    fill_color='YlGnBu',
-    fill_opacity=0.7,
-    line_opacity=0.2,
-    legend_name='Conteo por Provincia'
-).add_to(mapa)
+    fig = px.histogram(
+        MacaoAmbiguus_filtrados,
+        x='Mes',
+        color='Nombre',
+        title='Frecuencia de observaciones registradas de Ara ambiguus por mes',
+        labels={'Mes': 'Mes', 'Cantidad de observaciones': 'Cantidad de observaciones'},
+        color_discrete_map={'Ara ambiguus': '#38A800'}
+    )
+    fig.update_xaxes(categoryorder='array', categoryarray=[
+        'Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio',
+        'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'
+    ])
+    st.plotly_chart(fig)
+else:
+    st.warning("La columna 'month' no está presente en los datos filtrados.")
 
-# Agregar etiquetas para cada provincia
-for _, row in provinciasCR.iterrows():
-    folium.Marker(
-        location=[row['centroid'].y, row['centroid'].x],
-        icon=None,
-        popup=f"{row['provincia']}: {int(row['Conteo'])} observaciones"
-    ).add_to(mapa)
+# %%
+# Asignar valores de conteo a las provincias para el mapa
+if provinciasCR is not None:
+    provinciasCR['Conteo'] = provinciasCR['provincia'].map(
+        MacaoAmbiguus_CR['Provincia'].value_counts()
+    ).fillna(0)  # Rellenar con 0 si no hay datos
 
-# Agregar control de capas
-folium.LayerControl(collapsed=False).add_to(mapa)
+    # Crear el mapa de cloropletas
+    try:
+        m = provinciasCR.explore(
+            column='Conteo',
+            name='Cantidad de Lapas por provincia',
+            cmap='OrRd',
+            tooltip=['provincia', 'Conteo'],  # Mostrar provincia y conteo en el tooltip
+            legend=True,
+            legend_kwds={
+                'caption': "Distribución de las lapas en Provincias",
+                'orientation': "horizontal"
+            }
+        )
 
-# Mostrar el mapa interactivo
-st.subheader('Mapa Interactivo')
-st_folium(mapa, width=700, height=600)
-
-st.subheader('Mapa Interactivo')
-st_folium(mapa, width=700, height=600)
+        # Mostrar el mapa interactivo
+        st.subheader('Distribución de Ara Ambiguus en Costa Rica')
+        st_folium(m, width=700, height=600)
+    except Exception as e:
+        st.error(f"Error al generar el mapa interactivo: {e}")
+else:
+    st.error("No se pudieron cargar los datos de provincias.")
 
