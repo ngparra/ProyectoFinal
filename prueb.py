@@ -153,6 +153,8 @@ if 'month' in MacaoAmbiguus_filtrados.columns:
 else:
     st.warning("La columna 'month' no está presente en los datos filtrados.")
 
+# Ruta del ráster remoto
+raster_url = 'https://github.com/gf0657-programacionsig/2024-ii/raw/refs/heads/main/datos/worldclim/altitud.tif'
 
 # Crear un mapa base
 mapa = folium.Map(location=[9.8, -84], zoom_start=8, tiles=None)  # Sin mapa base inicial
@@ -161,6 +163,16 @@ mapa = folium.Map(location=[9.8, -84], zoom_start=8, tiles=None)  # Sin mapa bas
 folium.TileLayer('OpenStreetMap', name='OpenStreetMap').add_to(mapa)
 folium.TileLayer('CartoDB positron', name='CartoDB Positron').add_to(mapa)
 folium.TileLayer('Stamen Terrain', name='Stamen Terrain').add_to(mapa)
+
+# Agregar capa de ráster remoto
+raster_layer = folium.raster_layers.TileLayer(
+    tiles=raster_url,
+    attr="WorldClim Altitud",
+    name="Altitud",
+    overlay=True,
+    control=True
+)
+raster_layer.add_to(mapa)
 
 # %%
 # Asignar valores de conteo a las provincias para el mapa
