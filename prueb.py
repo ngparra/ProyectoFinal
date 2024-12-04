@@ -141,13 +141,23 @@ else:
     st.warning("La columna 'month' no está presente en los datos filtrados.")
 
 # %%
-# Crear el mapa interactivo con las áreas de conservación
+# Verificar datos de provinciasCR
+st.write("Columnas disponibles en provinciasCR:", provinciasCR.columns.tolist())
+st.write(provinciasCR.head())  # Verificar las primeras filas del GeoDataFrame
+
+# Crear la columna 'Conteo' si no existe o está vacía
+if 'Conteo' not in provinciasCR.columns or provinciasCR['Conteo'].isnull().all():
+    provinciasCR['Conteo'] = provinciasCR['provincia'].map(
+        MacaoAmbiguus_CR['Provincia'].value_counts()
+    ).fillna(0)  # Rellenar con 0 si no hay datos
+
+# Crear el mapa interactivo
 try:
     m = provinciasCR.explore(
         column='Conteo',
         name='Cantidad de Lapas por provincia',
         cmap='OrRd',
-        tooltip=['provincia'],
+        tooltip=['provincia', 'Conteo'],  # Mostrar provincia y conteo en el tooltip
         legend=True,
         legend_kwds={
             'caption': "Distribución de los lapas en Provincias",
@@ -160,4 +170,3 @@ try:
     st_folium(m, width=700, height=600)
 except Exception as e:
     st.error(f"Error al generar el mapa interactivo: {e}")
-
