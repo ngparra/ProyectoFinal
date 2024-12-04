@@ -1,4 +1,4 @@
-   # %% [markdown]
+# %% [markdown]
 # # Ara Macao y Ara Ambiguus: Costa Rica
 
 # %%
@@ -77,8 +77,7 @@ if provincia_seleccionada != 'Todas':
     # Obtener coordenadas para centrar el mapa en la provincia seleccionada
     provincia_geom = provinciasCR[provinciasCR['provincia'] == provincia_seleccionada]
     centro = [provincia_geom['centroid'].iloc[0].y, provincia_geom['centroid'].iloc[0].x]
-    zoom = 
- zoom = 10  # Zoom más cercano para provincias
+    zoom = 10  # Zoom más cercano para provincias
 else:
     datos_filtrados = MacaoAmbiguus_CR.copy()
     provinciasCR['Conteo'] = provinciasCR['provincia'].map(
@@ -94,6 +93,30 @@ st.subheader('Datos Filtrados de Ara Ambiguus')
 st.dataframe(datos_filtrados)
 
 # %% [markdown]
+# Gráfico de frecuencia mensual
+
+if 'month' in datos_filtrados.columns:
+    datos_filtrados['Mes'] = datos_filtrados['month'].replace({
+        1: 'Enero', 2: 'Febrero', 3: 'Marzo', 4: 'Abril',
+        5: 'Mayo', 6: 'Junio', 7: 'Julio', 8: 'Agosto',
+        9: 'Septiembre', 10: 'Octubre', 11: 'Noviembre', 12: 'Diciembre'
+    })
+
+    fig = px.histogram(
+        datos_filtrados,
+        x='Mes',
+        color='Nombre',
+        title=f'Frecuencia de observaciones en {"todas las provincias" if provincia_seleccionada == "Todas" else provincia_seleccionada}',
+        labels={'Mes': 'Mes', 'Cantidad de observaciones': 'Cantidad de observaciones'},
+        color_discrete_map={'Ara ambiguus': '#38A800'}
+    )
+    fig.update_xaxes(categoryorder='array', categoryarray=[
+        'Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio',
+        'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'
+    ])
+    st.plotly_chart(fig)
+
+# %% [markdown]
 # Mapa interactivo
 
 # Crear un mapa base con ubicación y zoom dinámico
@@ -104,21 +127,12 @@ folium.TileLayer('OpenStreetMap', name='OpenStreetMap').add_to(mapa)
 folium.TileLayer('CartoDB positron', name='CartoDB Positron').add_to(mapa)
 folium.TileLayer('Stamen Terrain', name='Stamen Terrain').add_to(mapa)
 
-# Agregar capa de ráster remoto
-raster_url = 'https://github.com/gf0657-programacionsig/2024-ii/raw/refs/heads/main/datos/worldclim/altitud.tif'
-folium.raster_layers.ImageOverlay(
-    name="Altitud",
-    image=raster_url,
-    bounds=[[8, -87], [11, -82]],  # Ajusta los límites a tu área de interés
-    opacity=0.6
-).add_to(mapa)
-
-# Agregar capa de cloropletas
+# Agregar capa de cloropletas basada en la columna 'Conteo'
 folium.Choropleth(
     geo_data=provinciasCR,
-    name='Cantidad de Lapas por provincia',
+    name='Conteo de Ara ambiguus por provincia',
     data=provinciasCR,
-    columns=['provincia', 'Conteo'],
+    columns=['provincia', 'Conteo'],  # Usamos la columna de conteo
     key_on='feature.properties.provincia',
     fill_color='OrRd',
     fill_opacity=0.7,
@@ -126,10 +140,17 @@ folium.Choropleth(
     legend_name='Conteo por Provincia'
 ).add_to(mapa)
 
+# Agregar etiquetas para cada provincia
+for _, row in provinciasCR.iterrows():
+    folium.Marker(
+        location=[row['centroid'].y, row['centroid'].x],
+        icon=None,
+        popup=f"{row['provincia']}: {int(row['Conteo'])} observaciones"
+    ).add_to(mapa)
+
 # Agregar control de capas
 folium.LayerControl(collapsed=False).add_to(mapa)
 
 # Mostrar el mapa interactivo
 st.subheader('Mapa Interactivo')
 st_folium(mapa, width=700, height=600)
-
