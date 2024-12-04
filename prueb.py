@@ -4,12 +4,10 @@
 # %%
 import streamlit as st
 import pandas as pd
-import plotly.express as px
 import geopandas as gpd
 import folium
 from streamlit_folium import st_folium
 
-# %% [markdown]
 # Configuración inicial y carga de datos
 
 # CSV Ara Macao y Ara Ambiguus
@@ -56,37 +54,8 @@ provinciasCR = cargar_lim_provincias()
 if MacaoAmbiguus_CR is None or provinciasCR is None:
     st.stop()
 
-# %% [markdown]
-# Filtros para las visualizaciones
-
-# Filtro por Especie
-especies_unicas = MacaoAmbiguus_CR['Nombre'].unique().tolist()
-especies_unicas.sort()
-opciones_especies = ['Todas'] + especies_unicas
-
-especie_seleccionada = st.sidebar.selectbox("Elige una especie:", opciones_especies)
-
-# Aplicar filtro por especie
-if especie_seleccionada != 'Todas':
-    datos_por_especie = MacaoAmbiguus_CR[MacaoAmbiguus_CR['Nombre'] == especie_seleccionada]
-else:
-    datos_por_especie = MacaoAmbiguus_CR.copy()
-
-# Filtro por Cuenta Individual
-cuentas_unicas = datos_por_especie['Cuenta Individual'].unique().tolist()
-cuentas_unicas.sort()
-opciones_cuentas = ['Todas'] + cuentas_unicas
-
-cuenta_seleccionada = st.sidebar.selectbox("Elige una Cuenta Individual:", opciones_cuentas)
-
-# Aplicar filtro por Cuenta Individual
-if cuenta_seleccionada != 'Todas':
-    datos_por_cuenta = datos_por_especie[datos_por_especie['Cuenta Individual'] == cuenta_seleccionada]
-else:
-    datos_por_cuenta = datos_por_especie.copy()
-
-# Filtro por Provincia (basado en los datos filtrados por Cuenta Individual)
-provincias_filtradas = datos_por_cuenta['Provincia'].unique().tolist()
+# Filtro por Provincia
+provincias_filtradas = MacaoAmbiguus_CR['Provincia'].unique().tolist()
 provincias_filtradas.sort()
 opciones_provincias = ['Todas'] + provincias_filtradas
 
@@ -94,7 +63,7 @@ provincia_seleccionada = st.sidebar.selectbox("Elige una Provincia:", opciones_p
 
 # Aplicar filtro por Provincia
 if provincia_seleccionada != 'Todas':
-    datos_filtrados = datos_por_cuenta[datos_por_cuenta['Provincia'] == provincia_seleccionada]
+    datos_filtrados = MacaoAmbiguus_CR[MacaoAmbiguus_CR['Provincia'] == provincia_seleccionada]
     provinciasCR['Conteo'] = provinciasCR['provincia'].map(
         datos_filtrados['Provincia'].value_counts()
     ).fillna(0)
@@ -104,7 +73,7 @@ if provincia_seleccionada != 'Todas':
     centro = [provincia_geom['centroid'].iloc[0].y, provincia_geom['centroid'].iloc[0].x]
     zoom = 10  # Zoom más cercano para provincias
 else:
-    datos_filtrados = datos_por_cuenta.copy()
+    datos_filtrados = MacaoAmbiguus_CR.copy()
     provinciasCR['Conteo'] = provinciasCR['provincia'].map(
         datos_filtrados['Provincia'].value_counts()
     ).fillna(0)
@@ -117,31 +86,6 @@ else:
 st.subheader('Datos Filtrados')
 st.dataframe(datos_filtrados)
 
-# %% [markdown]
-# Gráfico de frecuencia mensual
-
-if 'month' in datos_filtrados.columns:
-    datos_filtrados['Mes'] = datos_filtrados['month'].replace({
-        1: 'Enero', 2: 'Febrero', 3: 'Marzo', 4: 'Abril',
-        5: 'Mayo', 6: 'Junio', 7: 'Julio', 8: 'Agosto',
-        9: 'Septiembre', 10: 'Octubre', 11: 'Noviembre', 12: 'Diciembre'
-    })
-
-    fig = px.histogram(
-        datos_filtrados,
-        x='Mes',
-        color='Nombre',
-        title=f'Frecuencia de observaciones en {"todas las provincias" if provincia_seleccionada == "Todas" else provincia_seleccionada}',
-        labels={'Mes': 'Mes', 'Cantidad de observaciones': 'Cantidad de observaciones'},
-        color_discrete_map={'Ara ambiguus': '#38A800'}
-    )
-    fig.update_xaxes(categoryorder='array', categoryarray=[
-        'Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio',
-        'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'
-    ])
-    st.plotly_chart(fig)
-
-# %% [markdown]
 # Mapa interactivo
 
 # Crear un mapa base con ubicación y zoom dinámico
@@ -180,5 +124,3 @@ folium.LayerControl(collapsed=False).add_to(mapa)
 st.subheader('Mapa Interactivo')
 st_folium(mapa, width=700, height=600)
 
-st.subheader('Mapa Interactivo')
-st_folium(mapa, width=700, height=600)
