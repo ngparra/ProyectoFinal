@@ -25,9 +25,7 @@ from folium.raster_layers import ImageOverlay
 from streamlit_folium import folium_static, st_folium
 from branca.colormap import LinearColormap, linear
 
-# %%
-st.title('Ara Macao y Ara Ambiguus: Costa Rica')
-st.subheader('Geog. Santiago Brenes Salas (B81292)')
+
 
 # %%
 # CSV Ara Macao y Ara Ambiguus
@@ -38,6 +36,10 @@ lim_provincias = 'Aras/provincias.gpkg'
 
 # %% [markdown]
 # # Carga de datos
+
+# %%
+st.title('Ara Macao y Ara Ambiguus: Costa Rica')
+st.subheader('Geog. Santiago Brenes Salas (B81292)')
 
 @st.cache_data
 def cargar_Ara_MacaoAmbiguus():
