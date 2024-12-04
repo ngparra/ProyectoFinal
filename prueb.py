@@ -38,11 +38,31 @@ lim_provincias = 'Aras/provincias.gpkg'
 @st.cache_data
 def cargar_Ara_MacaoAmbiguus():
     try:
+        # Cargar el archivo CSV con tabulaciones como delimitador
         MacaoAmbiguus = pd.read_csv(Ara_MacaoAmbiguus, delimiter="\t")
+        
+        # Eliminar espacios adicionales de los nombres de las columnas
+        MacaoAmbiguus.columns = MacaoAmbiguus.columns.str.strip()
+        
+        # Verificar los nombres actualizados (puedes usar st.write en lugar de print)
+        st.write("Nombres de columnas después de la limpieza:", MacaoAmbiguus.columns.tolist())
+        
         return MacaoAmbiguus
     except Exception as e:
         st.error(f"Error al cargar el archivo CSV: {e}")
         return None
+
+# Cargar los datos
+MacaoAmbiguus_CR = cargar_Ara_MacaoAmbiguus()
+
+# Verificar si los datos se cargaron correctamente
+if MacaoAmbiguus_CR is not None:
+    st.write("Datos cargados con éxito.")
+    # Continuar con el procesamiento normal
+    MacAmb_prov = MacaoAmbiguus_CR['Provincia'].unique().tolist()
+else:
+    st.error("No se pudieron cargar los datos.")
+    st.stop()
 
 @st.cache_data
 def cargar_lim_provincias():
