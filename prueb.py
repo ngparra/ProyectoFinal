@@ -153,7 +153,7 @@ if 'month' in MacaoAmbiguus_filtrados.columns:
 else:
     st.warning("La columna 'month' no está presente en los datos filtrados.")
 
-# %% [markdown]
+
 # Crear un mapa base
 mapa = folium.Map(location=[9.8, -84], zoom_start=8, tiles=None)  # Sin mapa base inicial
 
@@ -162,26 +162,31 @@ folium.TileLayer('OpenStreetMap', name='OpenStreetMap').add_to(mapa)
 folium.TileLayer('CartoDB positron', name='CartoDB Positron').add_to(mapa)
 folium.TileLayer('Stamen Terrain', name='Stamen Terrain').add_to(mapa)
 
-# Verificar que la columna 'Conteo' y el campo 'provincia' existen
-if 'Conteo' in provinciasCR.columns and 'provincia' in provinciasCR.columns:
-    # Agregar capa de datos (cloropletas)
-    folium.Choropleth(
-        geo_data=provinciasCR,
-        name='Conteo de Ara ambiguus',
-        data=provinciasCR,
-        columns=['provincia', 'Conteo'],  # Campos para unir datos
-        key_on='feature.properties.provincia',  # Campo del GeoJSON
-        fill_color='OrRd',
-        fill_opacity=0.7,
-        line_opacity=0.2,
-        legend_name='Observaciones de Ara ambiguus'
-    ).add_to(mapa)
+# %%
+# Asignar valores de conteo a las provincias para el mapa
+if provinciasCR is not None:
+    provinciasCR['Conteo'] = provinciasCR['provincia'].map(
+        MacaoAmbiguus_CR['Provincia'].value_counts()
+    ).fillna(0)  # Rellenar con 0 si no hay datos
 
-    # Agregar control de capas
-    folium.LayerControl().add_to(mapa)
+    # Crear el mapa de cloropletas
+    try:
+        m = provinciasCR.explore(
+            column='Conteo',
+            name='Cantidad de Lapas por provincia',
+            cmap='OrRd',
+            tooltip=['provincia', 'Conteo'],  # Mostrar provincia y conteo en el tooltip
+            legend=True,
+            legend_kwds={
+                'caption': "Distribución de las lapas en Provincias",
+                'orientation': "horizontal"
+            }
+        )
 
-    # Mostrar mapa
-    st.subheader('Mapa interactivo con opciones de mapas base')
-    st_folium(mapa, width=700, height=600)
+        # Mostrar el mapa interactivo
+        st.subheader('Distribución de Ara Ambiguus en Costa Rica')
+        st_folium(m, width=700, height=600)
+    except Exception as e:
+        st.error(f"Error al generar el mapa interactivo: {e}")
 else:
-    st.error("La columna 'Conteo' o 'provincia' no está disponible en los datos.")
+    st.error("No se pudieron cargar los datos de provincias.")
