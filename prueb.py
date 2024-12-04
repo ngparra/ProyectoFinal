@@ -29,7 +29,6 @@ from branca.colormap import LinearColormap, linear
 st.title('Ara Macao y Ara Ambiguus: Costa Rica')
 st.subheader('Geog. Santiago Brenes Salas (B81292)')
 
-
 # %%
 # CSV Ara Macao y Ara Ambiguus
 Ara_MacaoAmbiguus = 'Aras/Macao_Ambiguus.csv' 
